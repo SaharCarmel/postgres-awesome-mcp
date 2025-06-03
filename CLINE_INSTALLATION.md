@@ -1,6 +1,6 @@
 # PostgreSQL MCP Server - Cline Installation Guide
 
-This guide explains how to install and configure the PostgreSQL MCP server for use with Cline.
+This guide explains how to install and configure the PostgreSQL MCP server for use with Cline. The server supports both single database and multi-database configurations.
 
 ## Prerequisites
 
@@ -25,6 +25,8 @@ uv sync
 
 ### 3. Configure Database Connection
 
+#### Option A: Single Database (Backward Compatible)
+
 Copy the example environment file and configure your database credentials:
 
 ```bash
@@ -40,6 +42,52 @@ POSTGRES_DATABASE=your-database-name
 POSTGRES_USER=your-username
 POSTGRES_PASSWORD=your-password
 ```
+
+#### Option B: Multiple Databases
+
+For connecting to multiple PostgreSQL databases simultaneously:
+
+1. Copy the example configuration file:
+```bash
+cp databases.json.example databases.json
+```
+
+2. Edit `databases.json` with your multiple database configurations:
+```json
+{
+  "databases": {
+    "primary": {
+      "host": "your-primary-host",
+      "port": 5432,
+      "database": "main_db",
+      "user": "postgres",
+      "password": "password1"
+    },
+    "analytics": {
+      "host": "your-analytics-host",
+      "port": 5432,
+      "database": "analytics_db",
+      "user": "analyst",
+      "password": "password2"
+    },
+    "staging": {
+      "host": "your-staging-host",
+      "port": 5432,
+      "database": "staging_db",
+      "user": "postgres",
+      "password": "password3"
+    }
+  },
+  "default_database": "primary"
+}
+```
+
+3. Set the configuration file path (optional):
+```bash
+export POSTGRES_CONFIG_FILE=databases.json
+```
+
+Or add it to your Cline configuration environment variables.
 
 ### 4. Test the Server
 
@@ -70,6 +118,7 @@ uv run mcp install server.py --name "PostgreSQL Server"
 
 2. Add the following configuration to the `mcpServers` object:
 
+**For Single Database:**
 ```json
 {
   "mcpServers": {
@@ -77,7 +126,8 @@ uv run mcp install server.py --name "PostgreSQL Server"
       "autoApprove": [
         "execute_query",
         "list_tables",
-        "describe_table"
+        "describe_table",
+        "list_databases"
       ],
       "disabled": false,
       "timeout": 60,
@@ -94,6 +144,35 @@ uv run mcp install server.py --name "PostgreSQL Server"
         "POSTGRES_DATABASE": "your-database-name",
         "POSTGRES_USER": "your-username",
         "POSTGRES_PASSWORD": "your-password"
+      },
+      "transportType": "stdio"
+    }
+  }
+}
+```
+
+**For Multiple Databases:**
+```json
+{
+  "mcpServers": {
+    "postgres-mcp": {
+      "autoApprove": [
+        "execute_query",
+        "list_tables",
+        "describe_table",
+        "list_databases"
+      ],
+      "disabled": false,
+      "timeout": 60,
+      "command": "/path/to/uv",
+      "args": [
+        "run",
+        "--directory",
+        "/path/to/pg-mcp",
+        "server.py"
+      ],
+      "env": {
+        "POSTGRES_CONFIG_FILE": "/path/to/pg-mcp/databases.json"
       },
       "transportType": "stdio"
     }
@@ -165,23 +244,61 @@ Execute this query: SELECT COUNT(*) FROM orders WHERE status = 'pending'
 ## Available Tools
 
 ### execute_query
-Execute SQL queries against your PostgreSQL database.
+Execute SQL queries against any configured PostgreSQL database.
 
 **Parameters:**
 - `query` (string): The SQL query to execute
+- `database_id` (string, optional): Database identifier. Uses default if not specified.
+
+**Examples:**
+```
+Execute this query: SELECT * FROM users LIMIT 10
+```
+```
+Run this query on the analytics database: SELECT COUNT(*) FROM events WHERE date > '2025-01-01'
+```
 
 ### list_tables
-List all tables in a specified schema.
+List all tables in a specified schema from any database.
 
 **Parameters:**
 - `schema` (string, optional): Schema name (default: "public")
+- `database_id` (string, optional): Database identifier. Uses default if not specified.
+
+**Examples:**
+```
+List all tables in the public schema
+```
+```
+Show me tables from the analytics database
+```
 
 ### describe_table
-Get detailed information about a specific table.
+Get detailed information about a specific table from any database.
 
 **Parameters:**
 - `table_name` (string): Name of the table to describe
 - `schema` (string, optional): Schema name (default: "public")
+- `database_id` (string, optional): Database identifier. Uses default if not specified.
+
+**Examples:**
+```
+Show me the structure of the users table
+```
+```
+Describe the events table from the analytics database
+```
+
+### list_databases
+List all available database connections configured in the MCP server.
+
+**Parameters:**
+None
+
+**Example:**
+```
+Show me all available databases
+```
 
 ## Resources
 

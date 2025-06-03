@@ -1,14 +1,15 @@
 # PostgreSQL MCP Server
 
-A Model Context Protocol server that provides tools for querying PostgreSQL databases.
+A Model Context Protocol server that provides tools for querying PostgreSQL databases. Supports multiple named database connections.
 
 ## Features
 
-- **execute_query**: Execute SQL queries (SELECT, INSERT, UPDATE, DELETE)
-- **list_tables**: List all tables in a schema
-- **describe_table**: Get detailed table structure information
-- **schema resources**: Access database schema as MCP resources
+- **execute_query**: Execute SQL queries with optional database selection
+- **list_tables**: List all tables in a schema from any configured database
+- **describe_table**: Get detailed table structure information from any database
+- **list_databases**: List all configured database connections
 - **sql_query_helper**: Prompt template for SQL query assistance
+- **Multi-database support**: Connect to multiple PostgreSQL servers simultaneously
 
 ## Installation
 
@@ -31,6 +32,8 @@ If you're using this MCP server with Cline, see the [Cline Installation Guide](C
 
 ## Configuration
 
+### Single Database (Backward Compatible)
+
 1. Copy the example environment file:
    ```bash
    cp .env.example .env
@@ -43,6 +46,41 @@ If you're using this MCP server with Cline, see the [Cline Installation Guide](C
    POSTGRES_DATABASE=your_database
    POSTGRES_USER=your_username
    POSTGRES_PASSWORD=your_password
+   ```
+
+### Multiple Databases
+
+1. Copy the example configuration file:
+   ```bash
+   cp databases.json.example databases.json
+   ```
+
+2. Edit `databases.json` with your multiple database configurations:
+   ```json
+   {
+     "databases": {
+       "primary": {
+         "host": "localhost",
+         "port": 5432,
+         "database": "main_db",
+         "user": "postgres",
+         "password": "password1"
+       },
+       "analytics": {
+         "host": "analytics-server.com",
+         "port": 5432,
+         "database": "analytics_db",
+         "user": "analyst",
+         "password": "password2"
+       }
+     },
+     "default_database": "primary"
+   }
+   ```
+
+3. Optionally set the config file path:
+   ```bash
+   export POSTGRES_CONFIG_FILE=databases.json
    ```
 
 ## Usage
@@ -72,61 +110,90 @@ uv run mcp install server.py --name "PostgreSQL Server"
 ## Available Tools
 
 ### execute_query
-Execute SQL queries against your PostgreSQL database.
+Execute SQL queries against any configured PostgreSQL database.
 
 **Parameters:**
 - `query` (string): The SQL query to execute
+- `database_id` (string, optional): Database identifier. Uses default if not specified.
 
-**Example:**
+**Examples:**
 ```python
+# Use default database
 result = await session.call_tool("execute_query", {
     "query": "SELECT * FROM users WHERE active = true LIMIT 10"
+})
+
+# Use specific database
+result = await session.call_tool("execute_query", {
+    "query": "SELECT * FROM logs WHERE date > '2025-01-01'",
+    "database_id": "analytics"
 })
 ```
 
 ### list_tables
-List all tables in a specified schema.
+List all tables in a specified schema from any database.
 
 **Parameters:**
 - `schema` (string, optional): Schema name (default: "public")
+- `database_id` (string, optional): Database identifier. Uses default if not specified.
 
-**Example:**
+**Examples:**
 ```python
+# Default database
 tables = await session.call_tool("list_tables", {"schema": "public"})
+
+# Specific database
+tables = await session.call_tool("list_tables", {
+    "schema": "public", 
+    "database_id": "analytics"
+})
 ```
 
 ### describe_table
-Get detailed information about a specific table.
+Get detailed information about a specific table from any database.
 
 **Parameters:**
 - `table_name` (string): Name of the table to describe
 - `schema` (string, optional): Schema name (default: "public")
+- `database_id` (string, optional): Database identifier. Uses default if not specified.
 
-**Example:**
+**Examples:**
 ```python
+# Default database
 info = await session.call_tool("describe_table", {
     "table_name": "users",
     "schema": "public"
 })
+
+# Specific database
+info = await session.call_tool("describe_table", {
+    "table_name": "events",
+    "schema": "public",
+    "database_id": "analytics"
+})
+```
+
+### list_databases
+List all available database connections configured in the MCP server.
+
+**Parameters:**
+None
+
+**Example:**
+```python
+databases = await session.call_tool("list_databases", {})
+print("Available databases:", databases["databases"])
 ```
 
 ## Available Resources
 
-### schema://tables
-Get a comprehensive overview of all tables in the database.
+> **Note:** In multi-database mode, resources are limited to providing informational messages. Use the corresponding tools (`list_tables`, `describe_table`) instead for actual database operations.
 
-**Example:**
-```python
-schema = await session.read_resource("schema://tables")
-```
+### schema://tables
+Provides information about table resource limitations.
 
 ### schema://table/{table_name}
-Get detailed schema information for a specific table.
-
-**Example:**
-```python
-table_schema = await session.read_resource("schema://table/users")
-```
+Provides information about table resource limitations.
 
 ## Available Prompts
 
