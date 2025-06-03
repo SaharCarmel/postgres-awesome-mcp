@@ -21,8 +21,8 @@ If you're using this MCP server with Cline, see the [Cline Installation Guide](C
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Marble-rnd/pg-mcp.git
-   cd pg-mcp
+   git clone https://github.com/SaharCarmel/postgres-awesome-mcp.git
+   cd postgres-awesome-mcp
    ```
 
 2. Install dependencies:
