@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="logo.png" alt="PostgreSQL MCP Server Logo" width="200" height="200">
+</div>
+
 # PostgreSQL MCP Server
 
 A Model Context Protocol server that provides tools for querying PostgreSQL databases. Supports multiple named database connections.
