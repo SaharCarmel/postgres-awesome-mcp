@@ -1,0 +1,26 @@
+{
+  "databases": {
+    "primary": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "main_db",
+      "user": "postgres",
+      "password": "password1"
+    },
+    "analytics": {
+      "host": "analytics-server.com",
+      "port": 5432,
+      "database": "analytics_db",
+      "user": "analyst",
+      "password": "password2"
+    },
+    "staging": {
+      "host": "staging-db.com",
+      "port": 5432,
+      "database": "staging_db",
+      "user": "postgres",
+      "password": "password3"
+    }
+  },
+  "default_database": "primary"
+}
