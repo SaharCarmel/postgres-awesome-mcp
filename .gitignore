@@ -64,3 +64,6 @@ uv.lock
 
 # MCP specific
 mcp-inspector/
+
+# Configuration files with secrets
+databases.json
